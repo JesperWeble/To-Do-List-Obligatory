@@ -4,9 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Security.Cryptography.X509Certificates;
 using System.Runtime.Remoting.Messaging;
+using static To_Do_List.Program;
 
 namespace To_Do_List
 {
@@ -20,71 +22,109 @@ namespace To_Do_List
         {
             string filePath = "data.json";
             List<Note> noteList = new List<Note>();
+            string deserializedData = File.ReadAllText(filePath);
+            
+            try
+            {
+                var fullList = JsonSerializer.Deserialize<IList<Note>>(deserializedData);
+                foreach (var note in fullList)
+                {
+                    noteList.Add(note);
+                }
+            }
+            catch
+            {
+            }
+            Console.WriteLine("Type 'read' to see the list. \nType 'add' to add an entry to the list. \nType 'remove' to remove an entry. \n---Input Below---");
             while (true)
             {
-
-                Console.WriteLine("Welcome to the list.");
-                Console.WriteLine("Type 'read' to see the list. Type 'add' to add an entry to the list. Type 'remove' to remove an entry.");
                 var input = Console.ReadLine();
 
 
                 if (input == "read")
                 {
+                    Console.WriteLine("---Reading---");
+                    var entryNumber = 0;
+                    foreach (var note in noteList)
+                    {   
+                        Console.WriteLine($"{entryNumber}: {note.content}");
+                        entryNumber += 1;
+                    }
+                    Console.WriteLine("------------");
 
                 }
-                else if (input == "add") //Am currently trying to figure out why the below code is not adding anything to the JSON no matter what I do. Chat GPT has no clue.
+
+                else if (input == "add")
                 {
-                    Console.WriteLine("Type your note.");
+                    Console.WriteLine("---Type your note---");
                     string newNoteInput = Console.ReadLine();
-                    Note newNote = new Note();
-                    newNote.content = newNoteInput;
-                    noteList.Add(newNote);
-                    try
-                    {
-                        string updatedData = JsonConvert.SerializeObject(noteList, Formatting.Indented);
-                        File.AppendAllText(filePath, updatedData);
-                        Console.WriteLine($"{updatedData} added successfully.");
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine("Error");
+
+                    if (newNoteInput == "cancel") 
+                    {}
+
+                    else
+                    { 
+                        Note newNote = new Note
+                        {
+                            content = newNoteInput
+                        };
+                        noteList.Add(newNote);
+                        string jsonString = JsonSerializer.Serialize(noteList);
+                        File.WriteAllText(filePath, jsonString);
+                        Console.WriteLine($"Note: '{newNoteInput}' added successfully.");
                     }
                 }
+
+                else if (input == "remove")
+                {
+                    Console.WriteLine("---Type the entry number to remove---");
+                    string removeNoteInput = Console.ReadLine();
+
+                    if (removeNoteInput == "cancel") 
+                    { }
+                    
+                    
+                    else if (removeNoteInput == "all")
+                    {
+                        noteList.Clear();
+                        File.WriteAllText(filePath, "");
+                        Console.WriteLine($"All notes removed");
+                    }
+
+                    else
+                    {
+                        try
+                        { 
+                            int removedIndex = int.Parse(removeNoteInput);
+                            noteList.RemoveAt(removedIndex);
+                            string jsonString = JsonSerializer.Serialize(noteList);
+                            File.WriteAllText(filePath, jsonString);
+                            Console.WriteLine($"Note: '{removedIndex}' was removed successfully.");
+                        }
+                        catch
+                        {
+                            Console.WriteLine("Invalid entry...\n");
+                        }
+                        
+                    }
+                }
+
+                else if (input == "help")
+                {
+                    Console.WriteLine("Type 'read' to see the list. \nType 'add' to add an entry to the list. \nType 'remove' to remove an entry. \n---Input Below---");
+                }
+
+                else if (input == "stop" || input == "Stop" || input == "exit" || input == "Exit")
+                {
+                    break;
+                }
+
+                else
+                {
+                    Console.WriteLine("Invalid command...\n");
+                }
+                Console.WriteLine("");
             }
-            //    {$
-
-            //        foreach (var iteratingNote in noteList)
-            //        {
-            //            Console.WriteLine("hello");
-            //        }
-            //        //try
-            //        //{
-
-            //        //}
-            //        //catch (Exception e)
-            //        //{ 
-            //        //    Console.WriteLine(e); 
-            //        //}
-            //    }
-            //    else if (input == "add")
-            //    {
-            //        Console.WriteLine("Type your note.");
-            //        string newNoteInput = Console.ReadLine();
-            //        Note newLine = new Note();
-            //        newLine.content = newNoteInput;
-            //        noteList.Add(newLine);
-            //        List<Note> serializedObject = noteList;
-            //        File.WriteAllText(filePath, serializedObject + Environment.NewLine);
-
-
-            //    } 
-
-            //    else if (input == "stop")
-            //    {
-            //        break;
-            //    }
-            //}
-
         }
     }
 }
